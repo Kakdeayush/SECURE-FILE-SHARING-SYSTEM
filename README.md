@@ -20,13 +20,13 @@
 > Add your project screenshots below 👇
 
 ### 📸 Dashboard
-![Dashboard Screenshot](./screenshots/dashboard.png)
+![Dashboard Screenshot](./Screenshot/dashboard.png)
 
 ### 📸 Upload Page
-![Upload Screenshot](./screenshots/upload.png)
+![Upload Screenshot](./Screenshot/upload.png)
 
 ### 📸 Analytics Page
-![Home Screenshot](./screenshots/analytics.png)
+![Analytics Screenshot](./Screenshot/analytics.png)
 
 ---
 
