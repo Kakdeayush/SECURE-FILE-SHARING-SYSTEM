@@ -42,4 +42,18 @@ public class ProfileController {
         AuthDTOs.UserProfileResponse updated = authService.updateProfile(userDetails.getUsername(), request);
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully.", updated));
     }
+
+    /**
+     * PUT /api/profile/password
+     * Body: { currentPassword, newPassword }
+     * Returns: { success, message }
+     */
+    @PutMapping("/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody AuthDTOs.ChangePasswordRequest request) {
+
+        authService.changePassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully.", null));
+    }
 }

@@ -22,17 +22,46 @@ const mockRecentActivity = [
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ totalFiles: 0, totalDownloads: 0, activeLinks: 0 });
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Real API call would go here
-        // const res = await api.get('/dashboard/stats');
-        // setStats(res.data);
+        const [statsRes, activityRes, analyticsRes] = await Promise.all([
+          api.get('/dashboard/stats'),
+          api.get('/dashboard/activity'),
+          api.get('/analytics')
+        ]);
+        
+        setStats(statsRes.data.data);
+        
+        // Map backend activity to include icons and colors
+        const formattedActivity = (activityRes.data.data || []).map((log) => {
+          let icon = Folder;
+          let color = 'text-blue-500';
+          let bg = 'bg-blue-100';
 
-        const res = await api.get('/dashboard/stats');
-        setStats(res.data.data);
+          if (log.action.includes('Upload')) {
+            icon = Folder; color = 'text-blue-500'; bg = 'bg-blue-100';
+          } else if (log.action.includes('Download')) {
+            icon = Download; color = 'text-emerald-500'; bg = 'bg-emerald-100';
+          } else if (log.action.includes('Link')) {
+            icon = LinkIcon; color = 'text-indigo-500'; bg = 'bg-indigo-100';
+          }
+
+          return { ...log, icon, color, bg };
+        });
+        setRecentActivity(formattedActivity);
+
+        // Format chart data for AreaChart
+        const rawChartData = analyticsRes.data.data?.chartData || [];
+        setChartData(rawChartData.map(d => ({
+          name: d.date,
+          downloads: d.downloads
+        })));
+
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
@@ -83,7 +112,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-bold text-slate-800 mb-6">Download Trends</h3>
           <div className="flex-1 w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData.length ? chartData : mockChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorDownloads" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
@@ -109,7 +138,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-bold text-slate-800 mb-6">Recent Activity</h3>
           <div className="flex-1 overflow-y-auto pr-2 -mr-2">
             <div className="relative border-l border-slate-200 ml-4 space-y-8 pb-4">
-              {mockRecentActivity.map((log) => (
+              {(recentActivity.length ? recentActivity : mockRecentActivity).map((log) => (
                 <div key={log.id} className="relative pl-6">
                   <span className={`absolute -left-3.5 top-0.5 rounded-full p-1.5 ring-4 ring-white ${log.bg} ${log.color}`}>
                     <log.icon className="w-4 h-4" />

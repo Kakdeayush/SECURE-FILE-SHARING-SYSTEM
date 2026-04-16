@@ -4,7 +4,21 @@ import { LayoutDashboard, Folder, UploadCloud, BarChart2, User, LogOut, Menu } f
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [userProfile, setUserProfile] = React.useState({ name: 'Loading...', role: '...' });
   const location = useLocation();
+
+  React.useEffect(() => {
+    // Fetch profile
+    import('../../services/api').then(({ default: api }) => {
+      api.get('/profile')
+        .then(res => {
+          if (res.data && res.data.data) {
+            setUserProfile(res.data.data);
+          }
+        })
+        .catch(err => console.error("Failed to load profile", err));
+    });
+  }, []);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -83,11 +97,11 @@ const MainLayout = () => {
           </div>
           <div className="flex items-center space-x-4">
             <div className="hidden sm:block text-right">
-              <div className="text-sm font-medium text-slate-900">John Doe</div>
-              <div className="text-xs text-slate-500">Admin User</div>
+              <div className="text-sm font-medium text-slate-900">{userProfile.name}</div>
+              <div className="text-xs text-slate-500">{userProfile.role || 'User'}</div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md cursor-pointer hover:shadow-lg transition-shadow">
-              JD
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md cursor-pointer hover:shadow-lg transition-shadow uppercase">
+              {userProfile.name ? userProfile.name.charAt(0) : 'U'}
             </div>
           </div>
         </header>
@@ -95,7 +109,7 @@ const MainLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-4 lg:p-8 bg-slate-50">
           <div className="max-w-7xl mx-auto animation-fade-in">
-            <Outlet />
+            <Outlet context={{ userProfile, setUserProfile }} />
           </div>
         </main>
       </div>

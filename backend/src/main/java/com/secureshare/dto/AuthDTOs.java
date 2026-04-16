@@ -64,6 +64,15 @@ public class AuthDTOs {
         @NotBlank(message = "Name is required")
         private String name;
 
+        private String email;
+
         private String organization;
+    }
+
+    @Data
+    public static class ChangePasswordRequest {
+        @NotBlank(message = "New password is required")
+        @Size(min = 6, message = "Password must be at least 6 characters")
+        private String newPassword;
     }
 }

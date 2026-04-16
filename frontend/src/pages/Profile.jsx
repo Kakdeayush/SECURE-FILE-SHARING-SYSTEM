@@ -1,37 +1,88 @@
-import React, { useState } from 'react';
-import { User, Mail, Shield, Key, Save, Loader2, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Shield, Key, Save, Loader2, LogOut, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import api from '../services/api';
 
 const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
+  const { userProfile, setUserProfile } = useOutletContext() || { userProfile: {}, setUserProfile: () => {} };
 
   const [profileData, setProfileData] = useState({
-    name: 'Admin User',
-    email: 'admin@secureshare.com',
-    role: 'Administrator',
-    organization: 'Acme Corp'
+    name: userProfile.name || '',
+    email: userProfile.email || '',
+    role: userProfile.role || '',
+    organization: userProfile.organization || ''
   });
+
+  const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdSuccess, setPwdSuccess] = useState('');
+  const [pwdError, setPwdError] = useState('');
+
+  useEffect(() => {
+    setProfileData({
+      name: userProfile.name || '',
+      email: userProfile.email || '',
+      role: userProfile.role || '',
+      organization: userProfile.organization || ''
+    });
+  }, [userProfile]);
 
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
     setSuccessMsg('');
+    setErrorMsg('');
     try {
-      // Mock API delay
-      await new Promise(r => setTimeout(r, 800));
+      const res = await api.put('/profile', {
+        name: profileData.name,
+        email: profileData.email,
+        organization: profileData.organization
+      });
+      if (res.data && res.data.data) {
+        setUserProfile(res.data.data);
+      }
       setSuccessMsg('Profile updated successfully.');
     } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to update profile');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPwdError("New passwords do not match.");
+      return;
+    }
+    setPwdLoading(true);
+    setPwdSuccess('');
+    setPwdError('');
+    try {
+      await api.put('/profile/password', {
+        newPassword: passwordData.newPassword
+      });
+      setPwdSuccess('Password changed successfully.');
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      setPwdError(err.response?.data?.message || 'Failed to change password');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const scrollToPassword = () => {
+    document.getElementById('password-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -63,7 +114,10 @@ const Profile = () => {
               </h4>
             </div>
             <div className="p-4 space-y-4">
-              <button className="w-full text-left text-sm text-slate-700 hover:text-indigo-600 flex items-center transition-colors">
+              <button 
+                onClick={scrollToPassword}
+                className="w-full text-left text-sm text-slate-700 hover:text-indigo-600 flex items-center transition-colors"
+               >
                 <Key className="w-4 h-4 mr-2 text-slate-400" /> Change Password
               </button>
               <button 
@@ -83,7 +137,15 @@ const Profile = () => {
             
             {successMsg && (
               <div className="mb-6 bg-emerald-50 text-emerald-700 p-4 rounded-lg text-sm border border-emerald-100 flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
                 <span>{successMsg}</span>
+              </div>
+            )}
+            
+            {errorMsg && (
+              <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-lg text-sm border border-red-100 flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span>{errorMsg}</span>
               </div>
             )}
 
@@ -112,12 +174,12 @@ const Profile = () => {
                     </div>
                     <input
                       type="email"
-                      className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 text-sm cursor-not-allowed"
+                      className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-slate-50 focus:bg-white"
                       value={profileData.email}
-                      disabled
+                      onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">Email cannot be changed.</p>
+                  <p className="text-xs text-slate-400 mt-1">Changing email may require re-login.</p>
                 </div>
 
                 <div>
@@ -153,6 +215,69 @@ const Profile = () => {
                     <Save className="w-4 h-4 mr-2" />
                   )}
                   Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Change Password Panel */}
+          <div id="password-section" className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mt-6">
+            <h3 className="text-lg font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4 flex items-center">
+              <Key className="w-5 h-5 mr-2 text-slate-500" /> Change Password
+            </h3>
+            
+            {pwdSuccess && (
+              <div className="mb-6 bg-emerald-50 text-emerald-700 p-4 rounded-lg text-sm border border-emerald-100 flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                <span>{pwdSuccess}</span>
+              </div>
+            )}
+
+            {pwdError && (
+              <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-lg text-sm border border-red-100 flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span>{pwdError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-slate-50 focus:bg-white transition-colors"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-slate-50 focus:bg-white transition-colors"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={pwdLoading}
+                  className="flex items-center justify-center px-6 py-2.5 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-70 transition-all shadow-sm"
+                >
+                  {pwdLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Key className="w-4 h-4 mr-2" />
+                  )}
+                  Update Password
                 </button>
               </div>
             </form>

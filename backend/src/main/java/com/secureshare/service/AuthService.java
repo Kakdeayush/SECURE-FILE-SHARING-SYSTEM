@@ -100,6 +100,12 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setName(request.getName());
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateEmailException("An account with email '" + request.getEmail() + "' already exists.");
+            }
+            user.setEmail(request.getEmail());
+        }
         if (request.getOrganization() != null) {
             user.setOrganization(request.getOrganization());
         }
@@ -113,5 +119,14 @@ public class AuthService {
                 .role(saved.getRole())
                 .organization(saved.getOrganization())
                 .build();
+    }
+
+    @Transactional
+    public void changePassword(String email, AuthDTOs.ChangePasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 }

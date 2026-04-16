@@ -7,6 +7,8 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -19,10 +21,6 @@ const Login = () => {
     setError('');
 
     try {
-      // In a real scenario, uncomment the API call:
-      // const response = await api.post('/auth/login', formData);
-      // const { token } = response.data;
-
       const response = await api.post('/auth/login', formData);
       const { token } = response.data.data;
 
@@ -34,6 +32,87 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await api.post('/auth/forgot-password', { email: formData.email });
+      setSuccess(response.data.message || 'Password reset link sent to your email.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to process request. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isForgotPassword) {
+    return (
+      <div className="animation-fade-in">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-slate-800">Reset Password</h3>
+          <p className="text-sm text-slate-500 mt-1">Enter your email and we'll send you a link to reset your password.</p>
+        </div>
+
+        {error && (
+          <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-start">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm border border-emerald-100 flex items-start">
+            <span className="block sm:inline">{success}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleForgotPasswordSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="email"
+                name="email"
+                required
+                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors bg-slate-50 focus:bg-white"
+                placeholder="you@company.com"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 transition-all"
+          >
+            {loading ? <Loader2 className="animate-spin h-5 w-5 text-white" /> : 'Send Reset Link'}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center text-sm text-slate-600">
+          Remember your password?{' '}
+          <button 
+            onClick={() => {
+              setIsForgotPassword(false);
+              setSuccess('');
+              setError('');
+            }}
+            className="font-medium text-indigo-600 hover:text-indigo-500 bg-transparent border-none cursor-pointer"
+          >
+            Back to login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -99,9 +178,18 @@ const Login = () => {
           </div>
 
           <div className="text-sm">
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsForgotPassword(true);
+                setError('');
+                setSuccess('');
+              }} 
+              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors bg-transparent border-none cursor-pointer p-0"
+            >
               Forgot password?
-            </a>
+            </button>
           </div>
         </div>
 

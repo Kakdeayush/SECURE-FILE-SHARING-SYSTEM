@@ -42,4 +42,20 @@ public class AuthController {
         AuthDTOs.AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful.", response));
     }
+
+    /**
+     * POST /api/auth/forgot-password
+     * Body: { email }
+     * Returns: { success, message }
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Email is required"));
+        }
+        
+        // Mock email sending: Just accept it and return success for user experience
+        return ResponseEntity.ok(ApiResponse.success("If an account with this email exists, a password reset link has been sent.", null));
+    }
 }
