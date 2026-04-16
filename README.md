@@ -19,14 +19,14 @@
 
 > Add your project screenshots below 👇
 
-### 📸 Home Page
-![Home Screenshot](./screenshots/home.png)
-
 ### 📸 Dashboard
 ![Dashboard Screenshot](./screenshots/dashboard.png)
 
 ### 📸 Upload Page
 ![Upload Screenshot](./screenshots/upload.png)
+
+### 📸 Analytics Page
+![Home Screenshot](./screenshots/analytics.png)
 
 ---
 
